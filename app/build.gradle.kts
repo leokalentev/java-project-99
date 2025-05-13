@@ -3,6 +3,7 @@ plugins {
 	id("org.springframework.boot") version "3.4.5"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("io.freefair.lombok") version "8.6"
+	id("org.sonarqube") version "6.0.1.5171"
 	checkstyle
 	application
 }
@@ -49,4 +50,12 @@ dependencies {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+sonar {
+	properties {
+		property("sonar.projectKey", "leokalentev_java-project-99")
+		property("sonar.organization", "leokalentev")
+		property("sonar.host.url", "https://sonarcloud.io")
+	}
 }
