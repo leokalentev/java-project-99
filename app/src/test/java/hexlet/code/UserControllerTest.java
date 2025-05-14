@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.dto.UserCreateDTO;
 import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
+import hexlet.code.utils.JWTUtils;
 import net.datafaker.Faker;
 import org.instancio.Instancio;
 import org.instancio.Select;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -18,7 +20,6 @@ import java.util.Map;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest
 @AutoConfigureMockMvc
 class UserControllerTest {
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -43,6 +45,21 @@ class UserControllerTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JWTUtils jwtUtils;
+
+    private String createUserAndGetToken() {
+        String email = faker.internet().emailAddress();
+        String rawPassword = faker.internet().password(3, 12);
+        User user = new User();
+        user.setEmail(email);
+        user.setFirstName(faker.name().firstName());
+        user.setLastName(faker.name().lastName());
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        userRepository.save(user);
+        return jwtUtils.generateToken(email);
+    }
+
     @Test
     public void testWelcomePage() throws Exception {
         var result = mockMvc.perform(get("/welcome"))
@@ -54,7 +71,10 @@ class UserControllerTest {
 
     @Test
     public void testIndex() throws Exception {
-        var result = mockMvc.perform(get("/api/users"))
+        String token = createUserAndGetToken();
+
+        var result = mockMvc.perform(get("/api/users")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
         var body = result.getResponse().getContentAsString();
@@ -63,30 +83,26 @@ class UserControllerTest {
 
     @Test
     public void testShow() throws Exception {
-        var firstName = faker.name().firstName();
-        var lastName = faker.name().lastName();
-        var email = faker.internet().emailAddress();
-        var password = faker.internet().password(3, 12);
+        String token = createUserAndGetToken();
 
-        var user = Instancio.of(User.class)
-                .ignore(Select.field(User::getId))
-                .supply(Select.field(User::getFirstName), () -> firstName)
-                .supply(Select.field(User::getLastName), () -> lastName)
-                .supply(Select.field(User::getEmail), () -> email)
-                .supply(Select.field(User::getPassword), () -> password)
-                .ignore(Select.field(User::getCreatedAt))
-                .ignore(Select.field(User::getUpdateAt))
-                .create();
+        var user = new User();
+        user.setEmail(faker.internet().emailAddress());
+        user.setFirstName(faker.name().firstName());
+        user.setLastName(faker.name().lastName());
+        user.setPassword(passwordEncoder.encode("password"));
         userRepository.save(user);
 
-        MvcResult mvcResult = mockMvc.perform(get("/api/users/" + user.getId()).contentType(APPLICATION_JSON))
+        MvcResult mvcResult = mockMvc.perform(get("/api/users/" + user.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
+
         String json = mvcResult.getResponse().getContentAsString();
         assertThatJson(json).and(
-                a -> a.node("firstName").isEqualTo(firstName),
-                a -> a.node("lastName").isEqualTo(lastName),
-                a -> a.node("email").isEqualTo(email),
+                a -> a.node("firstName").isEqualTo(user.getFirstName()),
+                a -> a.node("lastName").isEqualTo(user.getLastName()),
+                a -> a.node("email").isEqualTo(user.getEmail()),
                 a -> a.node("createdAt").isNotNull()
         );
     }
@@ -105,10 +121,11 @@ class UserControllerTest {
         userCreateDTO.setPassword(password);
 
         MvcResult mvcResult = mockMvc.perform(post("/api/users")
-                .contentType(APPLICATION_JSON)
-                .content(om.writeValueAsString(userCreateDTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(userCreateDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
+
         String json = mvcResult.getResponse().getContentAsString();
         assertThatJson(json).and(
                 a -> a.node("firstName").isEqualTo(firstName),
@@ -120,54 +137,107 @@ class UserControllerTest {
 
     @Test
     public void testUpdateUser() throws Exception {
-        String oldEmail = faker.internet().emailAddress();
-        String oldFirstName = faker.name().firstName();
-        String oldLastName = faker.name().lastName();
-        String oldPassword = faker.internet().password(3, 12);
+        String rawPassword = faker.internet().password(3, 12);
 
-        var user = Instancio.of(User.class)
-                .ignore(Select.field(User::getId))
-                .supply(Select.field(User::getEmail), () -> oldEmail)
-                .supply(Select.field(User::getFirstName), () -> oldFirstName)
-                .supply(Select.field(User::getLastName), () -> oldLastName)
-                .supply(Select.field(User::getPassword), () -> passwordEncoder.encode(oldPassword))
-                .create();
+        var user = new User();
+        user.setEmail(faker.internet().emailAddress());
+        user.setFirstName(faker.name().firstName());
+        user.setLastName(faker.name().lastName());
+        user.setPassword(passwordEncoder.encode(rawPassword));
         userRepository.save(user);
+
+        String token = jwtUtils.generateToken(user.getEmail());
 
         String newFirstName = faker.name().firstName();
         Map<String, Object> updateData = Map.of("firstName", newFirstName);
 
-        MvcResult result = mockMvc.perform(
-                        put("/api/users/" + user.getId())
-                                .contentType(APPLICATION_JSON)
-                                .content(om.writeValueAsString(updateData))
-                )
+        MvcResult result = mockMvc.perform(put("/api/users/" + user.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .content(om.writeValueAsString(updateData)))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
         assertThatJson(responseBody).and(
                 a -> a.node("firstName").isEqualTo(newFirstName),
-                a -> a.node("lastName").isEqualTo(oldLastName),
-                a -> a.node("email").isEqualTo(oldEmail)
+                a -> a.node("lastName").isEqualTo(user.getLastName()),
+                a -> a.node("email").isEqualTo(user.getEmail())
         );
     }
 
+
     @Test
     public void testDeleteUser() throws Exception {
-        var user = Instancio.of(User.class)
-                .ignore(Select.field(User::getId))
-                .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
-                .supply(Select.field(User::getFirstName), () -> faker.name().firstName())
-                .supply(Select.field(User::getLastName), () -> faker.name().lastName())
-                .supply(Select.field(User::getPassword), () -> passwordEncoder.encode(faker.internet().password(3, 12)))
-                .create();
+        String rawPassword = faker.internet().password(3, 12);
+
+        var user = new User();
+        user.setEmail(faker.internet().emailAddress());
+        user.setFirstName(faker.name().firstName());
+        user.setLastName(faker.name().lastName());
+        user.setPassword(passwordEncoder.encode(rawPassword));
         userRepository.save(user);
 
-        mockMvc.perform(delete("/api/users/" + user.getId()))
+        String token = jwtUtils.generateToken(user.getEmail());
+
+        mockMvc.perform(delete("/api/users/" + user.getId())
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
 
         assertThat(userRepository.findById(user.getId())).isEmpty();
     }
 
+    @Test
+    public void testUpdateOtherUserForbidden() throws Exception {
+        String ownerEmail = faker.internet().emailAddress();
+        String ownerPassword = faker.internet().password(6, 12);
+        User owner = new User();
+        owner.setEmail(ownerEmail);
+        owner.setFirstName("Owner");
+        owner.setLastName("User");
+        owner.setPassword(passwordEncoder.encode(ownerPassword));
+        userRepository.save(owner);
+        String ownerToken = jwtUtils.generateToken(owner.getEmail());
+
+        User target = new User();
+        target.setEmail(faker.internet().emailAddress());
+        target.setFirstName("Target");
+        target.setLastName("User");
+        target.setPassword(passwordEncoder.encode(faker.internet().password(6, 12)));
+        userRepository.save(target);
+
+        Map<String, Object> updateData = Map.of("firstName", "Hacker");
+
+        mockMvc.perform(put("/api/users/" + target.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .content(om.writeValueAsString(updateData)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testDeleteOtherUserForbidden() throws Exception {
+        String hackerEmail = faker.internet().emailAddress();
+        String hackerPassword = faker.internet().password(6, 12);
+        User hacker = new User();
+        hacker.setEmail(hackerEmail);
+        hacker.setFirstName("Hacker");
+        hacker.setLastName("McEvil");
+        hacker.setPassword(passwordEncoder.encode(hackerPassword));
+        userRepository.save(hacker);
+        String hackerToken = jwtUtils.generateToken(hacker.getEmail());
+
+        User victim = new User();
+        victim.setEmail(faker.internet().emailAddress());
+        victim.setFirstName("Victim");
+        victim.setLastName("User");
+        victim.setPassword(passwordEncoder.encode(faker.internet().password(6, 12)));
+        userRepository.save(victim);
+
+        mockMvc.perform(delete("/api/users/" + victim.getId())
+                        .header("Authorization", "Bearer " + hackerToken))
+                .andExpect(status().isForbidden());
+    }
+
 }
+
