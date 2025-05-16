@@ -81,27 +81,23 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
-        if (userUpdateDTO.getEmail() != null) {
-            if (!isValidEmail(userUpdateDTO.getEmail())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Некорректный email");
-            }
-            user.setEmail(userUpdateDTO.getEmail());
+        if (!userUpdateDTO.getEmail().isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле email обязательно");
+        }
+        if (!isValidEmail(userUpdateDTO.getEmail().get())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Некорректный email");
         }
 
-        if (userUpdateDTO.getFirstName() != null) {
-            user.setFirstName(userUpdateDTO.getFirstName());
+        if (!userUpdateDTO.getPassword().isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле password обязательно");
+        }
+        if (userUpdateDTO.getPassword().get().length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Пароль должен содержать минимум 3 символа");
         }
 
-        if (userUpdateDTO.getLastName() != null) {
-            user.setLastName(userUpdateDTO.getLastName());
-        }
+        userMapper.update(userUpdateDTO, user);
 
-        if (userUpdateDTO.getPassword() != null) {
-            if (userUpdateDTO.getPassword().length() < 3) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Пароль должен содержать минимум 3 символа");
-            }
-            user.setPassword(passwordEncoder.encode(userUpdateDTO.getPassword()));
-        }
+        user.setPassword(passwordEncoder.encode(userUpdateDTO.getPassword().get()));
 
         userRepository.save(user);
         return userMapper.map(user);
@@ -112,6 +108,7 @@ public class UserController {
     }
 
     @DeleteMapping(path = "/users/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));

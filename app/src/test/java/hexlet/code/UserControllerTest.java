@@ -2,11 +2,13 @@ package hexlet.code;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.dto.UserCreateDTO;
+import hexlet.code.dto.UserUpdateDTO;
 import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.utils.JWTUtils;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -118,8 +120,11 @@ class UserControllerTest {
         userCreateDTO.setEmail(email);
         userCreateDTO.setPassword(password);
 
+        String token = createUserAndGetToken();
+
         MvcResult mvcResult = mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token)
                         .content(om.writeValueAsString(userCreateDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
@@ -147,20 +152,25 @@ class UserControllerTest {
         String token = jwtUtils.generateToken(user.getEmail());
 
         String newFirstName = faker.name().firstName();
-        Map<String, Object> updateData = Map.of("firstName", newFirstName);
+        String neEmail = faker.internet().emailAddress();
+
+        UserUpdateDTO newUser = new UserUpdateDTO();
+        newUser.setFirstName(JsonNullable.of(newFirstName));
+        newUser.setEmail(JsonNullable.of(neEmail));
+        newUser.setPassword(JsonNullable.of(rawPassword));
 
         MvcResult result = mockMvc.perform(put("/api/users/" + user.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
-                        .content(om.writeValueAsString(updateData)))
+                        .content(om.writeValueAsString(newUser)))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
         assertThatJson(responseBody).and(
                 a -> a.node("firstName").isEqualTo(newFirstName),
-                a -> a.node("lastName").isEqualTo(user.getLastName()),
-                a -> a.node("email").isEqualTo(user.getEmail())
+                a -> a.node("email").isEqualTo(neEmail),
+                a -> a.node("lastName").isEqualTo(user.getLastName())
         );
     }
 
@@ -180,7 +190,7 @@ class UserControllerTest {
 
         mockMvc.perform(delete("/api/users/" + user.getId())
                         .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         assertThat(userRepository.findById(user.getId())).isEmpty();
     }
