@@ -2,6 +2,8 @@ package hexlet.code.component;
 
 import hexlet.code.model.TaskStatus;
 import hexlet.code.model.User;
+import hexlet.code.model.Label;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -20,10 +22,12 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner initData(UserRepository userRepository,
                                       TaskStatusRepository statusRepository,
+                                      LabelRepository labelRepository,
                                       PasswordEncoder passwordEncoder) {
         return args -> {
             initAdmin(userRepository, passwordEncoder);
             initTaskStatuses(statusRepository);
+            initLabels(labelRepository);
         };
     }
 
@@ -57,4 +61,20 @@ public class DataInitializer {
             }
         }
     }
+
+    private void initLabels(LabelRepository repository) {
+        List<String> defaultLabels = List.of("feature", "bug");
+
+        for (String name : defaultLabels) {
+            boolean exists = repository.existsByName(name);
+            if (!exists) {
+                var label = new Label();
+                label.setName(name);
+                repository.save(label);
+                System.out.println("Created label: " + name);
+            }
+        }
+    }
 }
+
+

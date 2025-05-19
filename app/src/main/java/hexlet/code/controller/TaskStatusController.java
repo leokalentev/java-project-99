@@ -5,14 +5,14 @@ import hexlet.code.dto.TaskStatusDTO;
 import hexlet.code.dto.TaskStatusUpdateDTO;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.TaskStatusMapper;
-import hexlet.code.model.User;
+import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
-import hexlet.code.utils.UserUtils;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,17 +27,16 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@Validated
 public class TaskStatusController {
     @Autowired
     private TaskStatusRepository repository;
 
     @Autowired
-    private TaskStatusMapper mapper;
+    private TaskRepository taskRepository;
 
     @Autowired
-    private UserUtils userUtils;
-
-    private User user;
+    private TaskStatusMapper mapper;
 
     @GetMapping(path = "/task_statuses")
     public ResponseEntity<List<TaskStatusDTO>> index() {
@@ -111,6 +110,12 @@ public class TaskStatusController {
     @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void destroy(@PathVariable Long id) {
-        repository.deleteById(id);
+        var taskStatus = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Not found task status"));
+
+        if (taskRepository.existsByTaskStatusId(id)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "У статуса есть задача");
+        }
+        repository.delete(taskStatus);
     }
 }

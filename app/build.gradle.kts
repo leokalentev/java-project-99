@@ -47,6 +47,8 @@ dependencies {
 	implementation("org.instancio:instancio-junit:3.3.0")
 	testImplementation("net.javacrumbs.json-unit:json-unit-assertj:3.2.2")
 	implementation ("org.springframework.boot:spring-boot-starter-logging")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 }
 
 tasks.withType<Test> {

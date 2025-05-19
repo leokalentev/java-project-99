@@ -9,8 +9,6 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
-
-
 @Mapper(
         uses = {JsonNullableMapper.class},
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,

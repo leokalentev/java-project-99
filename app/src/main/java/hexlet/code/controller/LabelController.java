@@ -1,0 +1,94 @@
+package hexlet.code.controller;
+
+import hexlet.code.dto.LabelCreateDTO;
+import hexlet.code.dto.LabelDTO;
+import hexlet.code.dto.LabelUpdateDTO;
+import hexlet.code.exception.ResourceNotFoundException;
+import hexlet.code.mapper.LabelMapper;
+import hexlet.code.repository.LabelRepository;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
+@Validated
+public class LabelController {
+    @Autowired
+    private LabelRepository repository;
+
+    @Autowired
+    private LabelMapper mapper;
+
+    @GetMapping(path = "/labels")
+    public ResponseEntity<List<LabelDTO>> index() {
+        var labels = repository.findAll();
+        var res = labels.stream().map(mapper::map).toList();
+
+        return ResponseEntity.ok()
+                .header("X-Total-Count", String.valueOf(labels.size()))
+                .body(res);
+    }
+
+    @GetMapping(path = "/labels/{id}")
+    public LabelDTO show(@PathVariable Long id) {
+        var label = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
+
+        var labelDTO = mapper.map(label);
+        return labelDTO;
+    }
+
+    @PostMapping(path = "/labels")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LabelDTO create(@RequestBody @Valid LabelCreateDTO labelCreateDTO) {
+        var label = mapper.map(labelCreateDTO);
+        repository.save(label);
+
+        var labelDTO = mapper.map(label);
+        return labelDTO;
+    }
+
+    @PutMapping(path = "/labels/{id}")
+    public LabelDTO update(@PathVariable Long id, @RequestBody LabelUpdateDTO newLabel) {
+        var label = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
+
+        if (!newLabel.getName().isPresent() || newLabel.getName().get().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле name обязательно и не может быть пустым");
+        }
+
+        mapper.update(newLabel, label);
+        repository.save(label);
+
+        var labelDTO = mapper.map(label);
+        return labelDTO;
+    }
+
+    @DeleteMapping(path = "/labels/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void destroy(@PathVariable Long id) {
+        var label = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
+
+        if (!label.getTasks().isEmpty()) {
+            throw new IllegalStateException("Нельзя удалить метку, связанную с задачами");
+        }
+
+        repository.delete(label);
+    }
+}
