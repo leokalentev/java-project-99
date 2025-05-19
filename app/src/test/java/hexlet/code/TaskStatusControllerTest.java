@@ -72,6 +72,9 @@ class TaskStatusControllerTest {
     private TaskStatus createAndSaveStatus() {
         String name = faker.lorem().sentence();
         String slug = generateUniqueSlug();
+        do {
+            slug = generateUniqueSlug();
+        } while (repository.existsBySlug(slug));
         TaskStatus status = new TaskStatus();
         status.setName(name);
         status.setSlug(slug);
@@ -188,7 +191,6 @@ class TaskStatusControllerTest {
 
         assertThat(repository.findById(taskStatus.getId())).isEmpty();
     }
-
 
 }
 
