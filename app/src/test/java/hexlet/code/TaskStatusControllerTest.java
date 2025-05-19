@@ -5,6 +5,7 @@ import hexlet.code.dto.TaskStatusCreateDTO;
 import hexlet.code.dto.TaskStatusUpdateDTO;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.model.User;
+import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.utils.JWTUtils;
@@ -44,6 +45,7 @@ class TaskStatusControllerTest {
     @Autowired private ObjectMapper om;
     @Autowired private Faker faker;
     @Autowired private UserRepository userRepository;
+    @Autowired private TaskRepository taskRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JWTUtils jwtUtils;
 
@@ -51,6 +53,7 @@ class TaskStatusControllerTest {
     void setup() {
         repository.deleteAll();
         userRepository.deleteAll();
+        taskRepository.deleteAll();
     }
 
     private String createUserAndGetToken() {
