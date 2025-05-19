@@ -53,6 +53,8 @@ dependencies {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	maxParallelForks = 1
+	forkEvery = 0
 }
 
 sonar {
@@ -62,3 +64,5 @@ sonar {
 		property("sonar.host.url", "https://sonarcloud.io")
 	}
 }
+
+
