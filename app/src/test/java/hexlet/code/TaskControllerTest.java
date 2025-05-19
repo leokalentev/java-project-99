@@ -30,9 +30,12 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -125,6 +128,66 @@ public class TaskControllerTest {
     }
 
     @Test
+    public void filterByTitle() throws Exception {
+        String token = createUserAndGetToken();
+
+        Task task = createAndSaveTask();
+
+        mockMvc.perform(get("/api/tasks")
+                        .param("titleCont", "findme")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(task.getId()));
+    }
+
+    @Test
+    public void filterByAssignee() throws Exception {
+        String token = createUserAndGetToken();
+
+        Task task = createAndSaveTask();
+
+        mockMvc.perform(get("/api/tasks")
+                        .param("assigneeId", task.getAssignee().getId().toString())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].assignee_id").value(task.getAssignee().getId()));
+    }
+
+    @Test
+    public void filterByStatus() throws Exception {
+        String token = createUserAndGetToken();
+
+        Task task = createAndSaveTask();
+
+        mockMvc.perform(get("/api/tasks")
+                        .param("status", task.getTaskStatus().getSlug())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].status").value(task.getTaskStatus().getSlug()));
+    }
+
+    @Test
+    public void filterByLabel() throws Exception {
+        String token = createUserAndGetToken();
+
+        Task task = createAndSaveTask();
+
+        mockMvc.perform(get("/api/tasks")
+                        .param("labelId", task.getLabels().iterator().next().getId().toString())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].label_ids[0]").value(task.getLabels().iterator().next().getId()));
+    }
+    @Test
     public void show() throws Exception {
         String token = createUserAndGetToken();
 
@@ -140,7 +203,7 @@ public class TaskControllerTest {
                 a -> a.node("title").isEqualTo(task.getName()),
                 a -> a.node("index").isEqualTo(task.getIndex()),
                 a -> a.node("content").isEqualTo(task.getDescription()),
-                a -> a.node("status").isEqualTo(task.getTaskStatus().getName()),
+                a -> a.node("status").isEqualTo(task.getTaskStatus().getSlug()),
                 a -> a.node("assignee_id").isEqualTo(task.getAssignee().getId()),
                 a -> a.node("label_ids").isArray().contains(task.getLabels().iterator().next().getId()),
                 a -> a.node("createdAt").isNotNull()
@@ -162,7 +225,7 @@ public class TaskControllerTest {
         task.setTitle(name);
         task.setIndex(index);
         task.setContent(description);
-        task.setStatus(taskStatus.getName());
+        task.setStatus(taskStatus.getSlug());
         task.setAssigneeId(assignee.getId());
         task.setLabelIds(Set.of(label.getId()));
 
@@ -199,7 +262,7 @@ public class TaskControllerTest {
         TaskUpdateDTO task = new TaskUpdateDTO();
         task.setTitle(JsonNullable.of(name));
         task.setContent(JsonNullable.of(description));
-        task.setStatus(JsonNullable.of(taskStatus.getName()));
+        task.setStatus(JsonNullable.of(taskStatus.getSlug()));
         task.setAssigneeId(JsonNullable.of(assignee.getId()));
         task.setLabelIds(JsonNullable.of(Set.of(label.getId())));
 

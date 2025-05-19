@@ -6,6 +6,7 @@ import hexlet.code.dto.TaskUpdateDTO;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.TaskMapper;
 import hexlet.code.repository.TaskRepository;
+import hexlet.code.specification.TaskSpecification;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,9 +35,13 @@ public class TaskController {
     @Autowired
     private TaskMapper mapper;
 
+    @Autowired
+    private TaskSpecification specBuilder;
+
     @GetMapping(path = "/tasks")
-    public ResponseEntity<List<TaskDTO>> index() {
-        var tasks = repository.findAll();
+    public ResponseEntity<List<TaskDTO>> index(TaskDTO params) {
+        var spec = specBuilder.build(params);
+        var tasks = repository.findAll(spec);
         var res = tasks.stream().map(mapper::map).toList();
         return ResponseEntity
                 .ok()

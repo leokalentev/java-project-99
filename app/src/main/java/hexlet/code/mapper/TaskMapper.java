@@ -41,7 +41,7 @@ public abstract class TaskMapper {
 
     @Mapping(source = "name", target = "title")
     @Mapping(source = "description", target = "content")
-    @Mapping(source = "taskStatus.name", target = "status")
+    @Mapping(source = "taskStatus.slug", target = "status")
     @Mapping(source = "assignee.id", target = "assigneeId")
     @Mapping(target = "labelIds", expression = "java(mapLabelsToIds(task.getLabels()))")
     public abstract TaskDTO map(Task task);
@@ -75,11 +75,11 @@ public abstract class TaskMapper {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    protected TaskStatus mapTaskStatus(String statusName) {
-        if (statusName == null) {
+    protected TaskStatus mapTaskStatus(String slug) {
+        if (slug == null) {
             return null;
         }
-        return taskStatusRepository.findByName(statusName)
+        return taskStatusRepository.findBySlug(slug)
                 .orElseThrow(() -> new RuntimeException("TaskStatus not found"));
     }
 
