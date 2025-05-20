@@ -53,19 +53,21 @@ class TaskStatusControllerTest {
 
     @BeforeEach
     void setup() {
+        taskRepository.deleteAll();
         repository.deleteAll();
         userRepository.deleteAll();
-        taskRepository.deleteAll();
     }
 
     private String createUserAndGetToken() {
-        String email = faker.internet().emailAddress();
-        String password = faker.internet().password(6, 12);
+        String email = "user-" + UUID.randomUUID() + "@example.com";
+        String password = "password";
+
         User user = new User();
         user.setEmail(email);
-        user.setFirstName(faker.name().firstName());
-        user.setLastName(faker.name().lastName());
+        user.setFirstName("Test");
+        user.setLastName("User");
         user.setPassword(passwordEncoder.encode(password));
+
         userRepository.save(user);
         return jwtUtils.generateToken(email);
     }
@@ -75,16 +77,14 @@ class TaskStatusControllerTest {
     }
 
     private TaskStatus createAndSaveStatus() {
-        String name = faker.lorem().sentence();
+        String name = "status-" + UUID.randomUUID();
         String slug = generateUniqueSlug();
-        do {
-            slug = generateUniqueSlug();
-        } while (repository.existsBySlug(slug));
+
         TaskStatus status = new TaskStatus();
         status.setName(name);
         status.setSlug(slug);
-        repository.save(status);
-        return status;
+
+        return repository.save(status);
     }
 
     @Test
@@ -103,25 +103,18 @@ class TaskStatusControllerTest {
     @Test
     public void testShowTaskStatus() throws Exception {
         String token = createUserAndGetToken();
+        TaskStatus taskStatus = createAndSaveStatus();
 
-        TaskStatus taskStatus = new TaskStatus();
-        String name = faker.lorem().sentence();
-        String slug = generateUniqueSlug();
-        taskStatus.setName(name);
-        taskStatus.setSlug(slug);
-        repository.save(taskStatus);
-
-        MvcResult mvcResult = mockMvc.perform(get("/api/task_statuses/" + taskStatus.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
+        MvcResult result = mockMvc.perform(get("/api/task_statuses/" + taskStatus.getId())
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
-        String json = mvcResult.getResponse().getContentAsString();
+
+        var json = result.getResponse().getContentAsString();
         assertThatJson(json).and(
                 a -> a.node("name").isEqualTo(taskStatus.getName()),
                 a -> a.node("slug").isEqualTo(taskStatus.getSlug()),
                 a -> a.node("createdAt").isNotNull()
-
         );
     }
 
@@ -129,19 +122,21 @@ class TaskStatusControllerTest {
     public void testPostTaskStatus() throws Exception {
         String token = createUserAndGetToken();
 
-        String name = faker.lorem().sentence();
+        String name = "status-" + UUID.randomUUID();
         String slug = generateUniqueSlug();
-        TaskStatusCreateDTO taskStatusCreateDTO = new TaskStatusCreateDTO();
-        taskStatusCreateDTO.setName(name);
-        taskStatusCreateDTO.setSlug(slug);
 
-        MvcResult mvcResult = mockMvc.perform(post("/api/task_statuses")
+        TaskStatusCreateDTO dto = new TaskStatusCreateDTO();
+        dto.setName(name);
+        dto.setSlug(slug);
+
+        MvcResult result = mockMvc.perform(post("/api/task_statuses")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
-                        .content(om.writeValueAsString(taskStatusCreateDTO)))
+                        .content(om.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        var json = mvcResult.getResponse().getContentAsString();
+
+        String json = result.getResponse().getContentAsString();
         assertThatJson(json).and(
                 a -> a.node("name").isEqualTo(name),
                 a -> a.node("slug").isEqualTo(slug)
@@ -151,28 +146,23 @@ class TaskStatusControllerTest {
     @Test
     public void testUpdateTaskStatus() throws Exception {
         String token = createUserAndGetToken();
+        TaskStatus taskStatus = createAndSaveStatus();
 
-        String name = faker.lorem().sentence();
-        String slug = generateUniqueSlug();
-        TaskStatus taskStatus = new TaskStatus();
-        taskStatus.setName(name);
-        taskStatus.setSlug(slug);
-        repository.save(taskStatus);
-
-        String newName = faker.lorem().sentence();
+        String newName = "updated-status-" + UUID.randomUUID();
         String newSlug = generateUniqueSlug();
 
         TaskStatusUpdateDTO updateDTO = new TaskStatusUpdateDTO();
         updateDTO.setName(JsonNullable.of(newName));
         updateDTO.setSlug(JsonNullable.of(newSlug));
 
-        MvcResult mvcResult = mockMvc.perform(put("/api/task_statuses/" + taskStatus.getId())
+        MvcResult result = mockMvc.perform(put("/api/task_statuses/" + taskStatus.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
                         .content(om.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
                 .andReturn();
-        String json = mvcResult.getResponse().getContentAsString();
+
+        String json = result.getResponse().getContentAsString();
         assertThatJson(json).and(
                 a -> a.node("name").isEqualTo(newName),
                 a -> a.node("slug").isEqualTo(newSlug)
@@ -182,13 +172,7 @@ class TaskStatusControllerTest {
     @Test
     public void destroyTaskStatus() throws Exception {
         String token = createUserAndGetToken();
-
-        String name = faker.lorem().sentence();
-        String slug = generateUniqueSlug();
-        TaskStatus taskStatus = new TaskStatus();
-        taskStatus.setName(name);
-        taskStatus.setSlug(slug);
-        repository.save(taskStatus);
+        TaskStatus taskStatus = createAndSaveStatus();
 
         mockMvc.perform(delete("/api/task_statuses/" + taskStatus.getId())
                         .header("Authorization", "Bearer " + token))
@@ -196,7 +180,6 @@ class TaskStatusControllerTest {
 
         assertThat(repository.findById(taskStatus.getId())).isEmpty();
     }
-
 }
 
 
