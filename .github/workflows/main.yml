@@ -27,10 +27,6 @@ jobs:
         with:
           arguments: build
           build-root-directory: app
-
-      - name: Run tests with logs
-        run: ./gradlew test --info
-
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
