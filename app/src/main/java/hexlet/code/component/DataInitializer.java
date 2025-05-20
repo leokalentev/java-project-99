@@ -9,12 +9,14 @@ import hexlet.code.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
 
 @Configuration
+@Profile("!test")
 public class DataInitializer {
 
     private static final String ADMIN_EMAIL = "hexlet@example.com";
