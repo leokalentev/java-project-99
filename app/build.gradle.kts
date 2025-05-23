@@ -4,6 +4,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.7"
 	id("io.freefair.lombok") version "8.6"
 	id("org.sonarqube") version "6.0.1.5171"
+	id("io.sentry.jvm.gradle") version "5.6.0"
 	checkstyle
 	application
 }
@@ -49,6 +50,11 @@ dependencies {
 	implementation ("org.springframework.boot:spring-boot-starter-logging")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+	implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.5.0")
+	implementation ("io.sentry:sentry-logback:7.5.0")
+	implementation("org.json:json:20250107")
+	implementation("io.github.cdimascio:dotenv-java:3.0.0")
+
 }
 
 tasks.withType<Test> {
@@ -64,5 +70,11 @@ sonar {
 		property("sonar.host.url", "https://sonarcloud.io")
 	}
 }
+
+tasks.withType<JavaExec> {
+	jvmArgs("-javaagent:sentry-opentelemetry-agent-8.12.0.jar")
+	environment("SENTRY_AUTO_INIT", "false")
+}
+
 
 
