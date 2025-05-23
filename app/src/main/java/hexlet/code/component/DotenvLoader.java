@@ -2,9 +2,11 @@ package hexlet.code.component;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!test")
 public class DotenvLoader {
 
     @PostConstruct

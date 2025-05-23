@@ -50,8 +50,8 @@ dependencies {
 	implementation ("org.springframework.boot:spring-boot-starter-logging")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
-	implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.5.0")
-	implementation ("io.sentry:sentry-logback:7.5.0")
+	implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.12.0")
+	implementation("io.sentry:sentry-logback:8.12.0")
 	implementation("org.json:json:20250107")
 	implementation("io.github.cdimascio:dotenv-java:3.0.0")
 
@@ -71,10 +71,6 @@ sonar {
 	}
 }
 
-tasks.withType<JavaExec> {
-	jvmArgs("-javaagent:sentry-opentelemetry-agent-8.12.0.jar")
-	environment("SENTRY_AUTO_INIT", "false")
-}
 
 
 
