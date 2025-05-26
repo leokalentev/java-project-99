@@ -30,8 +30,8 @@ dependencies {
 	implementation("org.mapstruct:mapstruct:1.5.5.Final")
 	annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 	implementation("org.projectlombok:lombok:1.18.32")
-	implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 	annotationProcessor("org.projectlombok:lombok:1.18.32")
+	implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 	implementation("org.openapitools:jackson-databind-nullable:0.2.6")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -43,18 +43,13 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation(platform("org.junit:junit-bom:5.10.0"))
 	testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	implementation("net.datafaker:datafaker:2.0.1")
 	implementation("org.instancio:instancio-junit:3.3.0")
 	testImplementation("net.javacrumbs.json-unit:json-unit-assertj:3.2.2")
-	implementation ("org.springframework.boot:spring-boot-starter-logging")
+	implementation("org.springframework.boot:spring-boot-starter-logging")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
-	implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.12.0")
-	implementation("io.sentry:sentry-logback:8.12.0")
-	implementation("org.json:json:20250107")
 	implementation("io.github.cdimascio:dotenv-java:3.0.0")
-
 }
 
 tasks.withType<Test> {
