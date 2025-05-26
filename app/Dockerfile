@@ -6,6 +6,6 @@ COPY /app .
 
 RUN chmod +x gradlew
 
-RUN gradle installDist
+RUN ./gradlew installDist
 
 CMD ./build/install/demo/bin/demo
