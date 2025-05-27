@@ -20,18 +20,18 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-        working-directory: app
 
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v3
         with:
           arguments: build
-          build-root-directory: app
-      - name: Build and analyze
+          build-root-directory: .
+
+      - name: Build and analyse with Sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew build sonar --info
-        working-directory: app
         continue-on-error: true
+
       - name: Clear Gradle cache
         run: rm -rf ~/.gradle
