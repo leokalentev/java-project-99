@@ -177,9 +177,9 @@ class UserControllerTest {
 
     @Test
     public void testDeleteUser() throws Exception {
-       String token = createUserAndGetToken();
+        String token = createUserAndGetToken();
 
-       User user = userRepository.findLastAddedUser().get();
+        User user = userRepository.findLastAddedUser().get();
 
         mockMvc.perform(delete("/api/users/" + user.getId())
                         .header("Authorization", "Bearer " + token))
