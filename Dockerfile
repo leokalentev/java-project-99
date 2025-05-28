@@ -8,4 +8,4 @@ RUN chmod +x gradlew
 
 RUN ./gradlew installDist --no-daemon
 
-CMD ./build/install/demo/bin/demo
+CMD ./build/install/app/bin/app
