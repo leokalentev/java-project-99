@@ -87,27 +87,26 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
-        if (!userUpdateDTO.getEmail().isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле email обязательно");
-        }
-        if (!isValidEmail(userUpdateDTO.getEmail().get())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Некорректный email");
-        }
+        userUpdateDTO.getEmail().ifPresent(email -> {
+            if (!isValidEmail(email)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Некорректный email");
+            }
+            user.setEmail(email);
+        });
 
-        if (!userUpdateDTO.getPassword().isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле password обязательно");
-        }
-        if (userUpdateDTO.getPassword().get().length() < 3) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Пароль должен содержать минимум 3 символа");
-        }
+        userUpdateDTO.getPassword().ifPresent(password -> {
+            if (password.length() < 3) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Пароль должен содержать минимум 3 символа");
+            }
+            user.setPassword(passwordEncoder.encode(password));
+        });
 
         userMapper.update(userUpdateDTO, user);
-
-        user.setPassword(passwordEncoder.encode(userUpdateDTO.getPassword().get()));
 
         userRepository.save(user);
         return userMapper.map(user);
     }
+
 
     private boolean isValidEmail(String email) {
         return email != null && email.matches("^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,}$");
