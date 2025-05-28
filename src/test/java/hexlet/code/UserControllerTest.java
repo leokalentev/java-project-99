@@ -177,16 +177,9 @@ class UserControllerTest {
 
     @Test
     public void testDeleteUser() throws Exception {
-        String rawPassword = faker.internet().password(3, 12);
+       String token = createUserAndGetToken();
 
-        var user = new User();
-        user.setEmail(faker.internet().emailAddress());
-        user.setFirstName(faker.name().firstName());
-        user.setLastName(faker.name().lastName());
-        user.setPassword(passwordEncoder.encode(rawPassword));
-        userRepository.save(user);
-
-        String token = jwtUtils.generateToken(user.getEmail());
+       User user = userRepository.findLastAddedUser().get();
 
         mockMvc.perform(delete("/api/users/" + user.getId())
                         .header("Authorization", "Bearer " + token))
