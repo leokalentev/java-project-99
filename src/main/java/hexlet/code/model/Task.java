@@ -45,7 +45,6 @@ public class Task {
     @JoinColumn(name = "task_status_id")
     private TaskStatus taskStatus;
 
-    @NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "assignee_id")
     private User assignee;
