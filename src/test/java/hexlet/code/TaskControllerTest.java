@@ -92,7 +92,6 @@ public class TaskControllerTest {
         label.setName(faker.lorem().sentence());
         return labelRepository.save(label);
     }
-
     private Task createAndSaveTask() {
         var name = faker.lorem().sentence();
         var index = faker.number().positive();
