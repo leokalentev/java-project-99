@@ -82,27 +82,27 @@ public class TaskStatusController {
         var taskStatus = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task status not found"));
 
-        if (!newTask.getName().isPresent() || newTask.getName().get().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле name обязательно и не может быть пустым");
-        }
+        newTask.getName().ifPresent(name -> {
+            if (name.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле name не может быть пустым");
+            }
+            if (repository.existsByName(name) && !name.equals(taskStatus.getName())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Статус с таким названием уже существует");
+            }
+            taskStatus.setName(name);
+        });
 
-        if (!newTask.getSlug().isPresent() || newTask.getSlug().get().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле slug обязательно и не может быть пустым");
-        }
+        newTask.getSlug().ifPresent(slug -> {
+            if (slug.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле slug не может быть пустым");
+            }
+            if (repository.existsBySlug(slug) && !slug.equals(taskStatus.getSlug())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Статус с таким слагом уже существует");
+            }
+            taskStatus.setSlug(slug);
+        });
 
-        if (repository.existsByName(newTask.getName().get())
-                && !newTask.getName().get().equals(taskStatus.getName())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Статус с таким названием уже существует");
-        }
-
-        if (repository.existsBySlug(newTask.getSlug().get())
-                && !newTask.getSlug().get().equals(taskStatus.getSlug())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Статус с таким слагом уже существует");
-        }
-
-        mapper.update(newTask, taskStatus);
         repository.save(taskStatus);
-
         return mapper.map(taskStatus);
     }
 
