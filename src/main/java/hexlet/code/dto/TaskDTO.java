@@ -18,7 +18,7 @@ public class TaskDTO {
     @JsonProperty("assignee_id")
     private Long assigneeId;
 
-    @JsonProperty("label_ids")
+    @JsonProperty("taskLabelIds")
     private Set<Long> labelIds;
 
     private String createdAt;

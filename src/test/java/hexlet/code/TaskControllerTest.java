@@ -184,7 +184,7 @@ public class TaskControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Total-Count", "1"))
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].label_ids[0]").value(task.getLabels().iterator().next().getId()));
+                .andExpect(jsonPath("$[0].taskLabelIds[0]").value(task.getLabels().iterator().next().getId()));
     }
     @Test
     public void show() throws Exception {
@@ -204,7 +204,7 @@ public class TaskControllerTest {
                 a -> a.node("content").isEqualTo(task.getDescription()),
                 a -> a.node("status").isEqualTo(task.getTaskStatus().getSlug()),
                 a -> a.node("assignee_id").isEqualTo(task.getAssignee().getId()),
-                a -> a.node("label_ids").isArray().contains(task.getLabels().iterator().next().getId()),
+                a -> a.node("taskLabelIds").isArray().contains(task.getLabels().iterator().next().getId()),
                 a -> a.node("createdAt").isNotNull()
         );
     }
@@ -241,7 +241,7 @@ public class TaskControllerTest {
                 a -> a.node("content").isEqualTo(task.getContent()),
                 a -> a.node("status").isEqualTo(task.getStatus()),
                 a -> a.node("assignee_id").isEqualTo(task.getAssigneeId()),
-                a -> a.node("label_ids").isArray(),
+                a -> a.node("taskLabelIds").isArray(),
                 a -> a.node("createdAt").isNotNull()
         );
     }
@@ -277,7 +277,7 @@ public class TaskControllerTest {
                 a -> a.node("content").isEqualTo(task.getContent()),
                 a -> a.node("status").isEqualTo(task.getStatus()),
                 a -> a.node("assignee_id").isEqualTo(task.getAssigneeId()),
-                a -> a.node("label_ids").isArray(),
+                a -> a.node("taskLabelIds").isArray(),
                 a -> a.node("createdAt").isNotNull()
         );
     }

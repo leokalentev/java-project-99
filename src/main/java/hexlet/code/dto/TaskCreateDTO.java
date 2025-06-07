@@ -23,7 +23,7 @@ public class TaskCreateDTO {
     @JsonProperty("assignee_id")
     private Long assigneeId;
 
-    @JsonProperty("label_ids")
+    @JsonProperty("taskLabelIds")
     private Set<Long> labelIds = new HashSet<>();
 
     @NotBlank
