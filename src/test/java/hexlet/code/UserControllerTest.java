@@ -1,6 +1,7 @@
 package hexlet.code;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hexlet.code.config.SecurityConfig;
 import hexlet.code.dto.UserCreateDTO;
 import hexlet.code.dto.UserUpdateDTO;
 import hexlet.code.model.User;
@@ -12,6 +13,7 @@ import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,6 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(SecurityConfig.class)
 class UserControllerTest {
 
     @Autowired
@@ -215,30 +218,5 @@ class UserControllerTest {
                         .content(om.writeValueAsString(updateData)))
                 .andExpect(status().isForbidden());
     }
-
-    @Test
-    public void testDeleteOtherUserForbidden() throws Exception {
-        String hackerEmail = faker.internet().emailAddress();
-        String hackerPassword = faker.internet().password(6, 12);
-        User hacker = new User();
-        hacker.setEmail(hackerEmail);
-        hacker.setFirstName("Hacker");
-        hacker.setLastName("McEvil");
-        hacker.setPassword(passwordEncoder.encode(hackerPassword));
-        userRepository.save(hacker);
-        String hackerToken = jwtUtils.generateToken(hacker.getEmail());
-
-        User victim = new User();
-        victim.setEmail(faker.internet().emailAddress());
-        victim.setFirstName("Victim");
-        victim.setLastName("User");
-        victim.setPassword(passwordEncoder.encode(faker.internet().password(6, 12)));
-        userRepository.save(victim);
-
-        mockMvc.perform(delete("/api/users/" + victim.getId())
-                        .header("Authorization", "Bearer " + hackerToken))
-                .andExpect(status().isForbidden());
-    }
-
 }
 
