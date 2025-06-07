@@ -58,7 +58,7 @@ public class TaskStatusController {
     @PostMapping(path = "/task_statuses")
     @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.CREATED)
-    public TaskStatusDTO create(@RequestBody @Valid TaskStatusCreateDTO newTask) {
+    public TaskStatusDTO create(@Valid @RequestBody TaskStatusCreateDTO newTask) {
         if (repository.existsByName(newTask.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Статус с таким названием уже существует");
         }
@@ -77,15 +77,12 @@ public class TaskStatusController {
 
     @PutMapping(path = "/task_statuses/{id}")
     @PreAuthorize("isAuthenticated()")
-    public TaskStatusDTO update(@PathVariable Long id, @RequestBody TaskStatusUpdateDTO newTask)
+    public TaskStatusDTO update(@PathVariable Long id, @Valid @RequestBody TaskStatusUpdateDTO newTask)
             throws ResponseStatusException {
         var taskStatus = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task status not found"));
 
         newTask.getName().ifPresent(name -> {
-            if (name.isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле name не может быть пустым");
-            }
             if (repository.existsByName(name) && !name.equals(taskStatus.getName())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Статус с таким названием уже существует");
             }
@@ -93,9 +90,6 @@ public class TaskStatusController {
         });
 
         newTask.getSlug().ifPresent(slug -> {
-            if (slug.isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле slug не может быть пустым");
-            }
             if (repository.existsBySlug(slug) && !slug.equals(taskStatus.getSlug())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Статус с таким слагом уже существует");
             }

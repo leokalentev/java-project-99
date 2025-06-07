@@ -1,5 +1,4 @@
 plugins {
-	java
 	id("org.springframework.boot") version "3.4.5"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("io.freefair.lombok") version "8.6"
@@ -29,8 +28,6 @@ repositories {
 dependencies {
 	implementation("org.mapstruct:mapstruct:1.5.5.Final")
 	annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
-	implementation("org.projectlombok:lombok:1.18.32")
-	annotationProcessor("org.projectlombok:lombok:1.18.32")
 	implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 	implementation("org.openapitools:jackson-databind-nullable:0.2.6")
 	implementation("org.springframework.boot:spring-boot-starter-web")
@@ -65,7 +62,3 @@ sonar {
 		property("sonar.host.url", "https://sonarcloud.io")
 	}
 }
-
-
-
-

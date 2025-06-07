@@ -59,7 +59,7 @@ public class TaskController {
 
     @PostMapping(path = "/tasks")
     @ResponseStatus(HttpStatus.CREATED)
-    public TaskDTO create(@RequestBody @Valid TaskCreateDTO taskCreateDTO) {
+    public TaskDTO create(@Valid @RequestBody TaskCreateDTO taskCreateDTO) {
         var task = mapper.map(taskCreateDTO);
         repository.save(task);
 
@@ -68,17 +68,9 @@ public class TaskController {
     }
 
     @PutMapping(path = "/tasks/{id}")
-    public TaskDTO update(@PathVariable Long id, @RequestBody TaskUpdateDTO taskUpdateDTO) {
+    public TaskDTO update(@PathVariable Long id, @Valid @RequestBody TaskUpdateDTO taskUpdateDTO) {
         var task = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
-
-        if (!taskUpdateDTO.getTitle().isPresent() || taskUpdateDTO.getTitle().get().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле title обязательно и не может быть пустым");
-        }
-
-        if (!taskUpdateDTO.getStatus().isPresent() || taskUpdateDTO.getStatus().get().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле status обязательно и не может быть пустым");
-        }
 
         mapper.update(taskUpdateDTO, task);
         repository.save(task);

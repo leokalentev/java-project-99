@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -68,7 +69,7 @@ public class UserController {
 
     @PostMapping(path = "/users")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDTO create(@RequestBody @Valid UserCreateDTO userCreateDTO) {
+    public UserDTO create(@Valid @RequestBody UserCreateDTO userCreateDTO) {
         var user = userMapper.map(userCreateDTO);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
@@ -79,7 +80,8 @@ public class UserController {
     }
 
     @PutMapping("/users/{id}")
-    public UserDTO updateUser(@PathVariable Long id, @RequestBody UserUpdateDTO userUpdateDTO) {
+    public UserDTO updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO dto) {
+
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -87,41 +89,18 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
-        userUpdateDTO.getEmail().ifPresent(email -> {
-            if (!isValidEmail(email)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Некорректный email");
-            }
-            user.setEmail(email);
-        });
+        dto.getPassword().ifPresent(pwd ->
+                user.setPassword(passwordEncoder.encode(pwd)));
 
-        userUpdateDTO.getPassword().ifPresent(password -> {
-            if (password.length() < 3) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Пароль должен содержать минимум 3 символа");
-            }
-            user.setPassword(passwordEncoder.encode(password));
-        });
-
-        userMapper.update(userUpdateDTO, user);
-
+        userMapper.update(dto, user);
         userRepository.save(user);
         return userMapper.map(user);
     }
 
-
-    private boolean isValidEmail(String email) {
-        return email != null && email.matches("^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,}$");
-    }
-
+    @PreAuthorize("@userSecurity.isOwner(#id)")
     @DeleteMapping(path = "/users/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-        var user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        if (!userUtils.getCurrentUser().getId().equals(user.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-        }
-
         if (taskRepository.existsByAssigneeId(id)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User связан с задачей");
         }

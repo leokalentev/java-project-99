@@ -6,6 +6,7 @@ import hexlet.code.dto.LabelUpdateDTO;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.LabelMapper;
 import hexlet.code.repository.LabelRepository;
+import hexlet.code.repository.TaskRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,9 @@ public class LabelController {
     @Autowired
     private LabelMapper mapper;
 
+    @Autowired
+    private TaskRepository taskRepository;
+
     @GetMapping(path = "/labels")
     public ResponseEntity<List<LabelDTO>> index() {
         var labels = repository.findAll();
@@ -55,7 +59,7 @@ public class LabelController {
 
     @PostMapping(path = "/labels")
     @ResponseStatus(HttpStatus.CREATED)
-    public LabelDTO create(@RequestBody @Valid LabelCreateDTO labelCreateDTO) {
+    public LabelDTO create(@Valid @RequestBody LabelCreateDTO labelCreateDTO) {
         var label = mapper.map(labelCreateDTO);
         repository.save(label);
 
@@ -64,13 +68,9 @@ public class LabelController {
     }
 
     @PutMapping(path = "/labels/{id}")
-    public LabelDTO update(@PathVariable Long id, @RequestBody LabelUpdateDTO newLabel) {
+    public LabelDTO update(@PathVariable Long id, @Valid @RequestBody LabelUpdateDTO newLabel) {
         var label = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
-
-        if (!newLabel.getName().isPresent() || newLabel.getName().get().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле name обязательно и не может быть пустым");
-        }
 
         mapper.update(newLabel, label);
         repository.save(label);
@@ -85,7 +85,7 @@ public class LabelController {
         var label = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
 
-        if (!label.getTasks().isEmpty()) {
+        if (taskRepository.existsByLabelsContaining(label)) {
             throw new IllegalStateException("Нельзя удалить метку, связанную с задачами");
         }
 

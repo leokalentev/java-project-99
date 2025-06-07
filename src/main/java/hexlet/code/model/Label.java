@@ -35,9 +35,6 @@ public class Label {
     @Column(unique = true)
     private String name;
 
-    @ManyToMany(mappedBy = "labels")
-    private Set<Task> tasks = new HashSet<>();
-
     @CreatedDate
     private LocalDate createdAt;
 }
