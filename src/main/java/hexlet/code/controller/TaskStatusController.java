@@ -8,7 +8,7 @@ import hexlet.code.mapper.TaskStatusMapper;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,15 +28,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @Validated
+@AllArgsConstructor
 public class TaskStatusController {
-    @Autowired
-    private TaskStatusRepository repository;
 
-    @Autowired
-    private TaskRepository taskRepository;
-
-    @Autowired
-    private TaskStatusMapper mapper;
+    private final TaskStatusRepository repository;
+    private final TaskRepository taskRepository;
+    private final TaskStatusMapper mapper;
 
     @GetMapping(path = "/task_statuses")
     public ResponseEntity<List<TaskStatusDTO>> index() {
@@ -107,9 +104,6 @@ public class TaskStatusController {
         var taskStatus = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found task status"));
 
-        if (taskRepository.existsByTaskStatusId(id)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "У статуса есть задача");
-        }
         repository.delete(taskStatus);
     }
 }

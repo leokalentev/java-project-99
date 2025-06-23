@@ -8,7 +8,7 @@ import hexlet.code.mapper.LabelMapper;
 import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -27,15 +27,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @Validated
+@AllArgsConstructor
 public class LabelController {
-    @Autowired
-    private LabelRepository repository;
 
-    @Autowired
-    private LabelMapper mapper;
-
-    @Autowired
-    private TaskRepository taskRepository;
+    private final LabelRepository repository;
+    private final LabelMapper mapper;
+    private final TaskRepository taskRepository;
 
     @GetMapping(path = "/labels")
     public ResponseEntity<List<LabelDTO>> index() {
@@ -83,10 +80,6 @@ public class LabelController {
     public void destroy(@PathVariable Long id) {
         var label = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
-
-        if (taskRepository.existsByLabelsContaining(label)) {
-            throw new IllegalStateException("Нельзя удалить метку, связанную с задачами");
-        }
 
         repository.delete(label);
     }

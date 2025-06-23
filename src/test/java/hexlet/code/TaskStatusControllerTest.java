@@ -1,8 +1,11 @@
 package hexlet.code;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.dto.TaskStatusCreateDTO;
+import hexlet.code.dto.TaskStatusDTO;
 import hexlet.code.dto.TaskStatusUpdateDTO;
+import hexlet.code.mapper.TaskStatusMapper;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.model.User;
 import hexlet.code.repository.TaskRepository;
@@ -24,6 +27,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -50,6 +54,7 @@ class TaskStatusControllerTest {
     @Autowired private TaskRepository taskRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JWTUtils jwtUtils;
+    @Autowired private TaskStatusMapper taskStatusMapper;
 
     @BeforeEach
     void setup() {
@@ -90,15 +95,26 @@ class TaskStatusControllerTest {
     @Test
     public void testIndex() throws Exception {
         String token = createUserAndGetToken();
-        createAndSaveStatus();
+
+        TaskStatus status = createAndSaveStatus();
+        List<TaskStatus> statusesFromDb = List.of(status);
+        List<TaskStatusDTO> expectedDtos = statusesFromDb.stream()
+                .map(taskStatusMapper::map)
+                .toList();
 
         var result = mockMvc.perform(get("/api/task_statuses")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
-        var body = result.getResponse().getContentAsString();
-        assertThatJson(body).isArray();
+
+        String json = result.getResponse().getContentAsString();
+
+        List<TaskStatusDTO> actualDtos = om.readValue(json, new TypeReference<>() { });
+        assertThat(actualDtos)
+                .usingRecursiveComparison()
+                .isEqualTo(expectedDtos);
     }
+
 
     @Test
     public void testShowTaskStatus() throws Exception {

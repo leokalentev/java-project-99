@@ -1,8 +1,11 @@
 package hexlet.code;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.dto.LabelCreateDTO;
+import hexlet.code.dto.LabelDTO;
 import hexlet.code.dto.LabelUpdateDTO;
+import hexlet.code.mapper.LabelMapper;
 import hexlet.code.model.Label;
 import hexlet.code.model.User;
 import hexlet.code.repository.LabelRepository;
@@ -19,6 +22,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -39,6 +44,9 @@ public class LabelControllerTest {
     @Autowired private UserRepository userRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JWTUtils jwtUtils;
+
+    @Autowired
+    private LabelMapper mapper;
 
     @BeforeEach
     void setup() {
@@ -70,15 +78,32 @@ public class LabelControllerTest {
     @Test
     public void index() throws Exception {
         String token = createUserAndGetToken();
-        createAndSaveLabel();
+
+        Label label1 = createAndSaveLabel();
+        Label label2 = createAndSaveLabel();
+        List<Label> labelsFromDb = List.of(label1, label2);
+
+        List<LabelDTO> expectedDtos = labelsFromDb.stream()
+                .map(mapper::map)
+                .toList();
 
         var result = mockMvc.perform(get("/api/labels")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
-        var body = result.getResponse().getContentAsString();
-        assertThatJson(body).isArray();
+
+        String json = result.getResponse().getContentAsString();
+
+        List<LabelDTO> actualDtos = om.readValue(
+                json,
+                new TypeReference<List<LabelDTO>>() { }
+        );
+
+        assertThat(actualDtos)
+                .usingRecursiveComparison()
+                .isEqualTo(expectedDtos);
     }
+
 
     @Test
     public void showLabel() throws Exception {
@@ -98,7 +123,6 @@ public class LabelControllerTest {
         assertThatJson(json).and(
                 a -> a.node("name").isEqualTo(label.getName()),
                 a -> a.node("createdAt").isNotNull()
-
         );
     }
 

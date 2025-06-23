@@ -9,7 +9,7 @@ import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.utils.UserUtils;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,29 +24,19 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.server.ResponseStatusException;
-
-
 import java.util.List;
 
 @RestController
 @RequestMapping("/api")
 @Validated
+@AllArgsConstructor
 public class UserController {
-    @Autowired
-    private UserRepository userRepository;
 
-    @Autowired
-    private TaskRepository taskRepository;
-
-    @Autowired
-    private UserMapper userMapper;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private UserUtils userUtils;
+    private final UserRepository userRepository;
+    private final TaskRepository taskRepository;
+    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final UserUtils userUtils;
 
     @GetMapping("/users")
     ResponseEntity<List<UserDTO>> index() {
@@ -80,14 +70,11 @@ public class UserController {
     }
 
     @PutMapping("/users/{id}")
+    @PreAuthorize("@userUtils.isCurrentUser(#id)")
     public UserDTO updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO dto) {
 
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        if (!userUtils.getCurrentUser().getId().equals(user.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-        }
 
         dto.getPassword().ifPresent(pwd ->
                 user.setPassword(passwordEncoder.encode(pwd)));
@@ -97,13 +84,10 @@ public class UserController {
         return userMapper.map(user);
     }
 
-    @PreAuthorize("@userSecurity.isOwner(#id)")
+    @PreAuthorize("@userUtils.isCurrentUser(#id)")
     @DeleteMapping(path = "/users/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-        if (taskRepository.existsByAssigneeId(id)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User связан с задачей");
-        }
         userRepository.deleteById(id);
     }
 }

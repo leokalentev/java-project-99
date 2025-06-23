@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
-    @Query(value = "SELECT * FROM users ORDER BY id DESC LIMIT 1", nativeQuery = true)
-    Optional<User> findLastAddedUser();
+    @Query("SELECT u FROM User u ORDER BY u.id DESC")
+    Optional<User> findFirstByOrderByIdDesc();
+
 }

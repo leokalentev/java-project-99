@@ -7,7 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("userUtils")
 public class UserUtils {
     @Autowired
     private UserRepository userRepository;
@@ -17,5 +17,10 @@ public class UserUtils {
         var email = authentication.getName();
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
+    public boolean isCurrentUser(Long id) {
+        User current = getCurrentUser();
+        return current.getId().equals(id);
     }
 }

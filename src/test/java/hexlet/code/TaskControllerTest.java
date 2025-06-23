@@ -1,8 +1,11 @@
 package hexlet.code;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.dto.TaskCreateDTO;
+import hexlet.code.dto.TaskDTO;
 import hexlet.code.dto.TaskUpdateDTO;
+import hexlet.code.mapper.TaskMapper;
 import hexlet.code.model.Label;
 import hexlet.code.model.Task;
 import hexlet.code.model.TaskStatus;
@@ -24,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
 import java.util.Set;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -50,6 +54,8 @@ public class TaskControllerTest {
     @Autowired private LabelRepository labelRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JWTUtils jwtUtils;
+    @Autowired private TaskMapper taskMapper;
+
 
     @BeforeEach
     void setup() {
@@ -117,13 +123,22 @@ public class TaskControllerTest {
         String token = createUserAndGetToken();
 
         Task task = createAndSaveTask();
+        List<Task> tasksFromDb = List.of(task);
+        List<TaskDTO> expectedDtos = tasksFromDb.stream()
+                .map(taskMapper::map)
+                .toList();
 
         var result = mockMvc.perform(get("/api/tasks")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
-        var body = result.getResponse().getContentAsString();
-        assertThatJson(body).isArray();
+
+        String json = result.getResponse().getContentAsString();
+
+        List<TaskDTO> actualDtos = om.readValue(json, new TypeReference<>() { });
+        assertThat(actualDtos)
+                .usingRecursiveComparison()
+                .isEqualTo(expectedDtos);
     }
 
     @Test

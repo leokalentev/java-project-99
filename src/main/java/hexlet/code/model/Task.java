@@ -59,4 +59,21 @@ public class Task {
 
     @CreatedDate
     private LocalDate createdAt;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Label)) {
+            return false;
+        }
+        Label label = (Label) o;
+        return id != null && id.equals(label.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return 31;
+    }
 }

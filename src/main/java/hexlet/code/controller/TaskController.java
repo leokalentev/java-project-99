@@ -8,7 +8,7 @@ import hexlet.code.mapper.TaskMapper;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.specification.TaskSpecification;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -27,15 +27,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @Validated
+@AllArgsConstructor
 public class TaskController {
-    @Autowired
-    private TaskRepository repository;
 
-    @Autowired
-    private TaskMapper mapper;
+    private final TaskRepository repository;
 
-    @Autowired
-    private TaskSpecification specBuilder;
+    private final TaskMapper mapper;
+
+    private final TaskSpecification specBuilder;
 
     @GetMapping(path = "/tasks")
     public ResponseEntity<List<TaskDTO>> index(TaskDTO params) {

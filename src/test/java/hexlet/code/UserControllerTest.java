@@ -5,9 +5,13 @@ import hexlet.code.config.SecurityConfig;
 import hexlet.code.dto.UserCreateDTO;
 import hexlet.code.dto.UserUpdateDTO;
 import hexlet.code.model.User;
+import hexlet.code.repository.LabelRepository;
+import hexlet.code.repository.TaskRepository;
+import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.utils.JWTUtils;
 import net.datafaker.Faker;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +36,23 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @AutoConfigureMockMvc
 @Import(SecurityConfig.class)
 class UserControllerTest {
+
+    @BeforeEach
+    void cleanDatabase() {
+        taskRepository.deleteAll();
+        taskStatusRepository.deleteAll();
+        labelRepository.deleteAll();
+        userRepository.deleteAll();
+    }
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
+    private LabelRepository labelRepository;
+
+    @Autowired
+    private TaskStatusRepository taskStatusRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -182,7 +203,7 @@ class UserControllerTest {
     public void testDeleteUser() throws Exception {
         String token = createUserAndGetToken();
 
-        User user = userRepository.findLastAddedUser().get();
+        User user = userRepository.findFirstByOrderByIdDesc().get();
 
         mockMvc.perform(delete("/api/users/" + user.getId())
                         .header("Authorization", "Bearer " + token))

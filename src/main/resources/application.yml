@@ -1,3 +1,30 @@
 spring:
+  application:
+    name: app
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
   profiles:
     active: development
+
+logging:
+  level:
+    hexlet.code.controller: DEBUG
+    hexlet.code.repository: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+sentry:
+  dsn: https://38bdafe7b67149a5be219d4a6fd9b4beeb9b10ffafe74831a381c69e46b2dc4f@k1.hawk.so/0
+  send-default-pii: true
+  exception-resolver-order: -2147483647
+  environment: development
+  traces-sample-rate: 1.0
+  debug: true
