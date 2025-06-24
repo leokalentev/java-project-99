@@ -9,7 +9,6 @@
 ### Test Coverage
 
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=leokalentev_java-project-99&metric=coverage)](https://sonarcloud.io/summary/new_code?id=leokalentev_java-project-99)
-
 ### Сайт
 
 [![Открыть сайт](https://img.shields.io/badge/перейти-на_сайт-blue?style=for-the-badge)](https://java-project-99-uybr.onrender.com)
