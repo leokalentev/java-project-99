@@ -9,9 +9,9 @@ import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,7 +53,6 @@ public class TaskStatusController {
     }
 
     @PostMapping(path = "/task_statuses")
-    @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.CREATED)
     public TaskStatusDTO create(@Valid @RequestBody TaskStatusCreateDTO newTask) {
         if (repository.existsByName(newTask.getName())) {
@@ -73,32 +72,23 @@ public class TaskStatusController {
     }
 
     @PutMapping(path = "/task_statuses/{id}")
-    @PreAuthorize("isAuthenticated()")
     public TaskStatusDTO update(@PathVariable Long id, @Valid @RequestBody TaskStatusUpdateDTO newTask)
             throws ResponseStatusException {
         var taskStatus = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task status not found"));
 
-        newTask.getName().ifPresent(name -> {
-            if (repository.existsByName(name) && !name.equals(taskStatus.getName())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Статус с таким названием уже существует");
-            }
-            taskStatus.setName(name);
-        });
+        newTask.getName().ifPresent(taskStatus::setName);
+        newTask.getSlug().ifPresent(taskStatus::setSlug);
 
-        newTask.getSlug().ifPresent(slug -> {
-            if (repository.existsBySlug(slug) && !slug.equals(taskStatus.getSlug())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Статус с таким слагом уже существует");
-            }
-            taskStatus.setSlug(slug);
-        });
-
-        repository.save(taskStatus);
+        try {
+            repository.save(taskStatus);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Имя или слаг должны быть уникальными");
+        }
         return mapper.map(taskStatus);
     }
 
     @DeleteMapping(path = "/task_statuses/{id}")
-    @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void destroy(@PathVariable Long id) {
         var taskStatus = repository.findById(id)
