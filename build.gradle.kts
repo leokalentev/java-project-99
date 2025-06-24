@@ -4,6 +4,7 @@ plugins {
 	id("io.freefair.lombok") version "8.6"
 	id("org.sonarqube") version "6.2.0.5505"
 	id("io.sentry.jvm.gradle") version "5.6.0"
+	id("jacoco")
 	checkstyle
 	application
 }
@@ -19,6 +20,10 @@ java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)
 	}
+}
+
+jacoco {
+	toolVersion = "0.8.10"
 }
 
 repositories {
@@ -60,6 +65,20 @@ sonar {
 		property("sonar.projectKey", "leokalentev_java-project-99")
 		property("sonar.organization", "leokalentev")
 		property("sonar.host.url", "https://sonarcloud.io")
+	}
+}
+
+tasks.test {
+	useJUnitPlatform()
+	finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+	dependsOn(tasks.test)
+	reports {
+		xml.required.set(true)
+		csv.required.set(false)
+		html.required.set(true)
 	}
 }
 
