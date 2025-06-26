@@ -1,7 +1,7 @@
 package hexlet.code.handler;
 
+import hexlet.code.exception.InvalidCredentialsException;
 import hexlet.code.exception.ResourceNotFoundException;
-import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,15 +16,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
-    public ResponseEntity<String> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
         String message = "Ошибка целостности данных";
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
 
-        if (ex.getCause() instanceof ConstraintViolationException || ex.getMessage().contains("constraint")) {
-            message = "Имя или слаг должны быть уникальными";
-        }
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(message);
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<String> handleInvalidCredentialsException(InvalidCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
     }
 }
